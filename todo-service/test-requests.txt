@@ -1,0 +1,15 @@
+# Create todo
+curl -X POST http://localhost:8082/todos \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Buy groceries","description":"Milk, eggs, bread","due_date":"2023-12-31T00:00:00Z"}'
+
+# Get all todos
+curl -X GET http://localhost:8082/todos \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Update todo
+curl -X PUT http://localhost:8082/todos/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"completed":true}'
