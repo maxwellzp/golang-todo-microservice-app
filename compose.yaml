@@ -1,57 +1,55 @@
 services:
   api-gateway:
     build: ./api-gateway
-    environment:
-      JWT_SECRET: your-strong-secret-key  # Must match other services
+    env_file:
+      - ./api-gateway/.env
     ports:
       - "8080:8080"
     depends_on:
-      - auth-db
-      - todo-db
-      - notification-db
+      - auth-service
+      - todo-service
+      - notification-service
 
   auth-service:
     build: ./auth-service
     ports:
       - "8081:8081"
+    env_file:
+      - ./auth-service/.env
     depends_on:
       auth-db:
         condition: service_healthy
-    environment:
-      DB_HOST: auth-db
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: auth
-      DB_PORT: 5432
-      JWT_SECRET: your-strong-secret-key
 
   todo-service:
     build: ./todo-service
     ports:
       - "8082:8082"
+    env_file:
+      - ./todo-service/.env
     depends_on:
-      - todo-db
-    environment:
-      DB_HOST: todo-db
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: todo
-      DB_PORT: 5432
-      JWT_SECRET: your-strong-secret-key
-
-  nats:
-    image: nats:latest
-    ports:
-      - "4222:4222"
+      todo-db:
+        condition: service_healthy
 
   notification-service:
     build: ./notification-service
     ports:
       - "8083:8083"
+    env_file:
+      - ./notification-service/.env
     depends_on:
-      - notification-db
-    environment:
-      NATS_URL: nats://nats:4222
+      notification-db:
+        condition: service_healthy
+
+  nats:
+    image: nats:latest
+    ports:
+      - "4222:4222"
+      - "8222:8222"  # HTTP monitoring
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8222/healthz"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   auth-db:
     image: postgres:13
@@ -59,36 +57,47 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: auth
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
-    ports:
-      - "5432:5432"
     volumes:
-      - auth-data:/var/lib/postgresql/data
+      - pgdata-auth:/var/lib/postgresql/data
+    # Uncomment if you want to connect from host (e.g., pgAdmin)
+    # ports:
+    #   - "127.0.0.1:5432:5432"
 
   todo-db:
     image: postgres:13
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: todo
-    ports:
-      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
-      - todo-data:/var/lib/postgresql/data
+      - pgdata-todo:/var/lib/postgresql/data
+    # ports:
+    #   - "127.0.0.1:5433:5432"
 
   notification-db:
     image: postgres:13
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: notification
-    ports:
-      - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
-      - notification-data:/var/lib/postgresql/data
+      - pgdata-notification:/var/lib/postgresql/data
+    # ports:
+    #   - "127.0.0.1:5434:5432"
 
 volumes:
-  auth-data:
-  todo-data:
-  notification-data:
+  pgdata-auth:
+  pgdata-todo:
+  pgdata-notification:

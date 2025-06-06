@@ -1,54 +1,40 @@
 package main
 
 import (
-	"auth-service/handlers"
-	"auth-service/models"
-	"github.com/joho/godotenv"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"auth-service/handler"
+	"auth-service/repository"
+	"auth-service/service"
+	"auth-service/util"
+	"database/sql"
 	"log"
 	"os"
+
+	"github.com/labstack/echo/v4"
+	_ "github.com/lib/pq"
 )
 
 func main() {
-	// Load environment variables
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
-	}
-
-	// Initialize Echo
-	e := echo.New()
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-
-	// Connect to PostgreSQL
-	dsn := "host=" + os.Getenv("DB_HOST") +
-		" user=" + os.Getenv("DB_USER") +
-		" password=" + os.Getenv("DB_PASSWORD") +
-		" dbname=" + os.Getenv("DB_NAME") +
-		" port=" + os.Getenv("DB_PORT") +
-		" sslmode=disable"
-
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := sql.Open("postgres", util.GetPostgresDSN())
 	if err != nil {
-		e.Logger.Fatal("Failed to connect to database")
+		log.Fatal("Failed to connect to DB:", err)
 	}
+	defer db.Close()
 
-	// Auto migrate models
-	if err := db.AutoMigrate(&models.User{}); err != nil {
-		e.Logger.Fatal("Failed to migrate database")
+	repo := repository.NewUserRepository(db)
+	jwtService := service.NewJWTService(os.Getenv("JWT_SECRET"))
+	authService := service.NewAuthService(repo, jwtService)
+	authHandler := handler.NewAuthHandler(authService)
+
+	e := echo.New()
+	// Group auth routes under /auth
+	authGroup := e.Group("/auth")
+	authGroup.POST("/register", authHandler.Register)
+	authGroup.POST("/login", authHandler.Login)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8081"
 	}
-
-	// Initialize handlers
-	authHandler := handlers.NewAuthHandler(db)
-
-	// Routes
-	e.POST("/register", authHandler.Register)
-	e.POST("/login", authHandler.Login)
-	e.GET("/validate", authHandler.ValidateToken)
-
-	// Start server
-	e.Logger.Fatal(e.Start(":8081"))
+	log.Println("Auth service running on port", port)
+	log.Fatal(e.Start(":" + port))
 }
