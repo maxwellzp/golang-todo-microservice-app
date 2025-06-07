@@ -14,7 +14,7 @@ func NewJWTService(secret string) *JWTService {
 	return &JWTService{secret}
 }
 
-func (s *JWTService) GenerateToken(userID int, email string) (string, error) {
+func (s *JWTService) GenerateToken(userID string, email string) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"email":   email,

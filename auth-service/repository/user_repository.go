@@ -14,8 +14,11 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 }
 
 func (r *UserRepository) Create(user *model.User) error {
-	_, err := r.db.Exec("INSERT INTO users (email, password) VALUES ($1, $2)", user.Email, user.Password)
-	return err
+	return r.db.QueryRow(
+		"INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id",
+		user.Email,
+		user.Password,
+	).Scan(&user.ID)
 }
 
 func (r *UserRepository) FindByEmail(email string) (*model.User, error) {

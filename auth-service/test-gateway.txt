@@ -1,0 +1,7 @@
+maksim@maksim-pc:~$ curl -X POST http://localhost:8080/auth/register   -H "Content-Type: application/json"   -d '{"email":"user@example.com","password":"secret"}'
+{"message":"User registered"}
+
+
+maksim@maksim-pc:~$ curl -X POST http://localhost:8080/auth/login   -H "Content-Type: application/json"   -d '{"email":"user@example.com","password":"secret"}'
+{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJleHAiOjE3NDkzODIyNzYsInVzZXJfaWQiOiIxOTZiMjhjNC03MzY3LTQxNjItYmE4ZS0zNjQyNWU5YjJhZjAifQ.2bU4IrbrVeZAr4I8iXA7Tk7u0vWLlfdAd0Ljwzu4dug"}
+

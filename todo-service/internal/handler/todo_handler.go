@@ -23,7 +23,7 @@ func NewTodoHandler(service service.TodoService) *TodoHandler {
 }
 
 func (h *TodoHandler) RegisterRoutes(e *echo.Echo) {
-	e.POST("/todos", h.CreateTodo)
+	e.POST("/todo/create", h.CreateTodo)
 	e.GET("/todos", h.GetTodos)
 }
 

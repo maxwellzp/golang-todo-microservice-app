@@ -2,6 +2,7 @@ package handler
 
 import (
 	"auth-service/service"
+	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -26,13 +27,14 @@ type LoginRequest struct {
 }
 
 func (h *AuthHandler) Register(c echo.Context) error {
+	log.Printf("Call Register ")
 	var req RegisterRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
 	}
-
 	err := h.service.Register(req.Email, req.Password)
 	if err != nil {
+		log.Printf("Register failed: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Could not register user"})
 	}
 

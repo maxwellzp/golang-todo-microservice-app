@@ -42,7 +42,7 @@ func (s *AuthService) Login(email, password string) (string, error) {
 		return "", errors.New("invalid credentials")
 	}
 
-	token, err := s.jwtService.GenerateToken(user.ID, user.Email)
+	token, err := s.jwtService.GenerateToken(user.ID.String(), user.Email)
 	if err != nil {
 		return "", err
 	}
