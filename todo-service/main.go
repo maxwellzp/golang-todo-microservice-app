@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"todo-service/internal/handler"
+	"todo-service/internal/nats"
 	"todo-service/internal/repository"
 	"todo-service/internal/service"
 
@@ -32,13 +33,21 @@ func main() {
 	}
 	defer db.Close()
 
+	// ✅ NATS Publisher
+	publisher, err := nats.NewPublisher()
+	if err != nil {
+		log.Fatal("Failed to connect to NATS:", err)
+	}
+	defer publisher.Close()
+
+	// ✅ Inject all dependencies
 	todoRepo := repository.NewTodoRepository(db)
 	todoService := service.NewTodoService(todoRepo)
-	todoHandler := handler.NewTodoHandler(todoService)
+	todoHandler := handler.NewTodoHandler(todoService, publisher)
 
 	e := echo.New()
 	todoHandler.RegisterRoutes(e)
 
-	log.Println("Starting TODO service on :8082")
+	log.Println("✅ TODO service started on :8082")
 	e.Logger.Fatal(e.Start(":8082"))
 }

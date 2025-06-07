@@ -18,8 +18,11 @@ type TodoHandler struct {
 	publisher *nats.Publisher
 }
 
-func NewTodoHandler(service service.TodoService) *TodoHandler {
-	return &TodoHandler{service: service}
+func NewTodoHandler(service service.TodoService, publisher *nats.Publisher) *TodoHandler {
+	return &TodoHandler{
+		service:   service,
+		publisher: publisher,
+	}
 }
 
 func (h *TodoHandler) RegisterRoutes(e *echo.Echo) {
